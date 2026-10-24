@@ -1,0 +1,15 @@
+{
+  "projects": {
+    "default": "shohjaxonr"
+  },
+  "targets": {
+    "shohjaxonr": {
+      "hosting": {
+        "dashpos": [
+          "dashposuz"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUPER ADMIN - Tizim Nazorati</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b5bdb' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5'%3E%3C/path%3E%3Cpath d='M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244'%3E%3C/path%3E%3Cpath d='M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05'%3E%3C/path%3E%3C/svg%3E" />
+    
+    <link rel="stylesheet" href="super-admin.css">
+
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // 7. Config bir marta yozilgan, uni shunday qoldiramiz (alohida faylga ajratish bundler talab qiladi)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcdNPePuxQ28eu_EjPmdaoIw1JbLeWSWs",
+            authDomain: "shohjaxonr.firebaseapp.com",
+            databaseURL: "https://shohjaxonr-default-rtdb.firebaseio.com",
+            projectId: "shohjaxonr",
+            storageBucket: "shohjaxonr.firebasestorage.app",
+            messagingSenderId: "757161385224",
+            appId: "1:757161385224:web:625707454887ad1cc1e0bd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+    </script>
+
+</head>
+<body>
+    <div id="globalLoader" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-body); z-index: 999999; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s;">
+        <div style="font-size: 24px; color: var(--brand-color); font-weight: bold; letter-spacing: 1px;">Yuklanmoqda...</div>
+    </div>
+    
+    <div id="customAlertModal" class="modal-overlay" style="z-index: 10001;">
+        <div class="modal-box" style="text-align: center; max-width: 380px;">
+            <h3 id="alertTitle" style="margin-top:0; border:none; padding-bottom: 0;">Xabar</h3>
+            <p id="alertMessage" style="color: var(--text-muted); margin-bottom: 25px; font-size: 15px; line-height: 1.5;"></p>
+            <button class="btn-save" style="width: 100%;" onclick="closeCustomAlert()">OK</button>
+        </div>
+    </div>
+
+    <div id="customConfirmModal" class="modal-overlay" style="z-index: 10001;">
+        <div class="modal-box" style="text-align: center; max-width: 400px;">
+            <h3 id="confirmTitle" style="margin-top:0; border:none; padding-bottom: 0;">Tasdiqlash</h3>
+            <p id="confirmMessage" style="color: var(--text-muted); margin-bottom: 25px; font-size: 15px; line-height: 1.5;"></p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn-cancel" onclick="closeCustomConfirm()">Yo'q, bekor qilish</button>
+                <button class="btn-save" style="background: var(--danger);" onclick="executeConfirm()">Ha, tasdiqlayman</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginOverlay" class="modal-overlay active">
+        <div class="login-panel">
+            <div style="font-size: 28px; font-weight: 900; color: var(--text-dark); margin-bottom: 25px;">S-ADMIN <span style="color: var(--brand-color);"><div class="logo">
+    <img src="logo2.png" alt="DashPOS" style="max-height: 50px; width: auto; object-fit: contain;">
+</div></span></div>
+            <div class="form-group"><input type="text" id="loginUsername" class="form-input" placeholder="Login (Email)"></div>
+            <div class="form-group"><input type="password" id="loginPassword" class="form-input" placeholder="Parol" onkeypress="if(event.key === 'Enter') attemptLogin();"></div>
+            <button class="btn-save" style="width: 100%; padding: 12px;" onclick="attemptLogin()">Kirish</button>
+        </div>
+    </div>
+
+    <div id="passwordModal" class="modal-overlay" style="z-index: 10002;">
+        <div class="modal-box" style="max-width: 350px; text-align: center;">
+            <h3 class="modal-title" style="border-bottom: 1px solid var(--border-color); padding-bottom: 10px; color: var(--text-dark); text-align: left;">Xavfsizlik</h3>
+            <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px; text-align: left;">Do'konni butunlay o'chirish uchun S-Admin parolini yozing:</p>
+            
+            <input type="password" id="saPasswordInput" placeholder="Parolni kiriting..." class="form-input" style="font-size: 16px; margin-bottom: 5px; font-weight: bold;" autocomplete="off" onkeypress="if(event.key === 'Enter') submitPassword();">
+            
+            <div id="saPasswordError" style="color: #e74c3c; font-size: 13px; font-weight: bold; margin-bottom: 15px; height: 16px; text-align: left; transition: 0.2s;"></div>
+            
+            <div class="modal-buttons" style="justify-content: flex-end;">
+                <button class="btn-cancel" onclick="closePasswordModal()">Bekor qilish</button>
+                <button class="btn-save" style="background: var(--danger);" onclick="submitPassword()">Tasdiqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <aside class="sidebar">
+        <div class="brand" style="display: flex; align-items: center; gap: 10px;">
+    <img src="logo2.png" alt="DashPOS" style="max-height: 50px; width: auto; object-fit: contain;">
+</div>
+        <div class="menu">
+            <div class="menu-item active" onclick="switchTab('dashboard', this)">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg> Asosiy Panel
+            </div>
+            
+            <div class="menu-item" onclick="switchTab('requests', this)">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg> So'rovlar
+            </div>
+            
+            <div class="menu-item" onclick="switchTab('settings', this)">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Sozlamalar
+            </div>
+        </div>
+    </aside>
+
+    <main class="main">
+        <header class="header">
+            <div class="header-title" id="pageTitle">
+                <button class="hamburger-btn" onclick="toggleSidebar()">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <span>Do'konlar Boshqaruvi</span>
+            </div>
+            <div class="header-controls">
+                <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()">
+                    <svg id="themeIcon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" fill="none" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                </button>
+                <div class="admin-profile" onclick="openProfileModal()">
+                    <div class="profile-text-wrap" style="text-align: right; line-height: 1.2; margin-right: 10px;" id="displayAdminName">
+                        <strong>Super Admin</strong>
+                    </div>
+                    <div class="admin-avatar" id="headerAvatar">SA</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content">
+            <div id="dashboard-section" class="section-container active">
+                <div class="combined-stats">
+                    <div class="stat-item">
+                        <div class="s-title" style="color: var(--brand-color);">Do'konlar</div>
+                        <div class="s-val" id="statTotal">0</div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <div class="s-title" style="color: var(--success);">Faol</div>
+                        <div class="s-val" id="statActive">0</div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <div class="s-title" style="color: var(--danger);">Bloklangan</div>
+                        <div class="s-val" id="statBlocked">0</div>
+                    </div>
+                </div>
+
+                <div class="panel-box">
+                    <div class="panel-header">
+                        <h3 style="margin:0; color: var(--text-dark);">Mijozlar Ro'yxati</h3>
+                        <button class="btn-add" onclick="openClientModal()">+ Yangi Do'kon</button>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>T/r</th>
+                                    <th>Do'kon Nomi</th>
+                                    <th>Login / Parol</th>
+                                    <th>Tarif</th>
+                                    <th>Muddati</th>
+                                    <th>Holati</th>
+                                    <th style="text-align: right;">Amallar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clientsTableBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="pagination-container" style="display: flex; justify-content: flex-end; align-items: center; padding: 15px 0 0 0; gap: 10px; border-top: 1px solid var(--border-color); margin-top: 15px;">
+                        <button class="btn-action" id="prevBtnClients" onclick="prevPageClients()">Oldingi</button>
+                        <span class="pagination-info" id="pageInfoClients">1 / 1</span>
+                        <button class="btn-action" id="nextBtnClients" onclick="nextPageClients()">Keyingi</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="requests-section" class="section-container">
+                <div class="panel-box">
+                    <div class="panel-header" style="flex-wrap: wrap; gap: 15px;">
+                        <h3 style="margin:0; color: var(--text-dark);">Telegram So'rovlar</h3>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            <button class="btn-action-transparent active" onclick="filterRequests('all', this)">Barchasi</button>
+                            <button class="btn-action-transparent" onclick="filterRequests('login', this)">🔑 Login / Parol</button>
+                            <button class="btn-action-transparent" onclick="filterRequests('bug', this)">🐛 Xatoliklar (Bug)</button>
+                            <button class="btn-action-transparent" onclick="filterRequests('suggestion', this)">💡 Takliflar</button>
+                        </div>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Sana</th>
+                                    <th>Foydalanuvchi</th>
+                                    <th>Turi</th>
+                                    <th>Xabar matni</th>
+                                    <th style="text-align:right;">Amallar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="requestsTableBody">
+                                <tr><td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">Hozircha so'rovlar yo'q...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="pagination-container" style="display: flex; justify-content: flex-end; align-items: center; padding: 15px 0 0 0; gap: 10px; border-top: 1px solid var(--border-color); margin-top: 15px;">
+                        <button class="btn-action" id="prevBtnReq" onclick="prevPageReq()">Oldingi</button>
+                        <span class="pagination-info" id="pageInfoReq">1 / 1</span>
+                        <button class="btn-action" id="nextBtnReq" onclick="nextPageReq()">Keyingi</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="settings-section" class="section-container">
+                <div class="panel-box" style="max-width: 600px; margin: 0 auto;">
+                    <h3 style="margin-top:0; margin-bottom:20px; padding-bottom:15px; border-bottom:1px solid var(--border-color); color: var(--text-dark);">S-Admin Sozlamalari</h3>
+                    <div class="form-group"><label class="form-label">Yangi Login</label><input type="text" id="setNewLogin" class="form-input"></div>
+                    <div class="form-group"><label class="form-label">Yangi Parol</label><input type="password" id="setNewPassword" class="form-input"></div>
+                    <button class="btn-save" style="width:100%; padding: 12px;" onclick="saveAdminSettings()">Yangilash</button>
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 15px;">Eslatma: Parol yoki loginni almashtirgach, xavfsizlik uchun tizimdan chiqib ketishingiz kerak bo'lishi mumkin.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="clientModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3 class="modal-title" id="modalTitle" style="border:none; padding-bottom:0; margin-bottom:20px; color: var(--text-dark);">Do'kon qo'shish</h3>
+            <div class="form-group">
+                <label class="form-label" style="color: var(--brand-color);">Do'kon UID (Firebase'dan kiritiladi)</label>
+                <input type="text" id="cId" class="form-input" placeholder="Firebase'dan olingan UID ni shu yerga qo'ying">
+            </div>
+            <div class="form-group"><label class="form-label">Do'kon Nomi</label><input type="text" id="cName" class="form-input" autocomplete="off"></div>
+            <div class="form-group"><label class="form-label">Telefon (Kassa)</label><input type="text" id="cPhone" class="form-input" placeholder="+998" autocomplete="off" value="+998"></div>
+            <div class="modal-flex-row">
+                <div class="form-group" style="flex:1"><label class="form-label">Tizimga kirish Login</label><input type="text" id="cLogin" class="form-input" autocomplete="off"></div>
+                <div class="form-group" style="flex:1"><label class="form-label">Tizimga kirish Parol</label><input type="text" id="cPassword" class="form-input" autocomplete="off"></div>
+            </div>
+            <div class="modal-flex-row">
+                <div class="form-group" style="flex:1">
+                    <label class="form-label">Tarif</label>
+                    <select id="cPlan" class="form-input" onchange="handlePlanChange()">
+                        <option value="oylik">Oylik</option><option value="yillik">Yillik</option><option value="vip">VIP</option>
+                    </select>
+                </div>
+                <div class="form-group" style="flex:1">
+                    <label class="form-label">Holati</label>
+                    <select id="cStatus" class="form-input"><option value="faol">Faol</option><option value="bloklangan">Bloklangan</option></select>
+                </div>
+            </div>
+            <div class="form-group"><label class="form-label">Muddati</label><input type="date" id="cEndDate" class="form-input"></div>
+            <div class="modal-buttons">
+                <button class="btn-action" style="flex:1; padding: 12px;" onclick="closeClientModal()">Bekor qilish</button>
+                <button class="btn-save" style="padding: 12px;" onclick="saveClient()">Saqlash</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="profileModal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 380px;">
+            <h3 class="modal-title" style="border:none; padding-bottom:0; text-align: center; color: var(--text-dark);">Profil</h3>
+            
+            <div style="display: flex; flex-direction: column; align-items: center; margin-top: 15px;">
+                <div class="admin-avatar-large" id="profileAvatarPreview" onclick="document.getElementById('avatarUploadInput').click()">
+                    <span id="profileAvatarText">SA</span>
+                    <img id="profileAvatarImg" src="" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                    <div class="avatar-hover-effect">
+                        <svg viewBox="0 0 24 24" width="24" height="24" stroke="white" stroke-width="2" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    </div>
+                </div>
+                <input type="file" id="avatarUploadInput" accept="image/*" style="display: none;" onchange="handleAvatarUpload(event)">
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 10px;">Rasmni o'zgartirish uchun ustiga bosing</div>
+            </div>
+
+            <div class="form-group" style="margin-top:20px;">
+                <label class="form-label" style="text-align: left;">S-Admin Ismi</label>
+                <input type="text" id="saNameInput" class="form-input" placeholder="Ismingizni kiriting" style="text-align: center; font-weight: bold;">
+            </div>
+            
+            <div style="display:flex; flex-direction: column; gap:15px; margin-top:25px;">
+                <button class="btn-save" style="width: 100%; padding: 12px; border-radius: 8px;" onclick="saveAdminProfile()">Saqlash</button>
+                <div style="display: flex; justify-content: space-between; gap: 10px;">
+                    <button class="btn-cancel" style="flex:1; padding: 12px; border-radius: 8px;" onclick="closeProfileModal()">Yopish</button>
+                    <button class="btn-action" style="flex:1; background: var(--danger); color: white; border: none; padding: 12px; border-radius: 20px;" onclick="logout()">Chiqish</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <script src="super-admin.js"></script>
+</body>
+</html>

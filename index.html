@@ -1,0 +1,805 @@
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DashPOS - Boshqaruv Paneli</title>
+    <link rel="stylesheet" href="admin.css">
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233b5bdb' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5'%3E%3C/path%3E%3Cpath d='M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244'%3E%3C/path%3E%3Cpath d='M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05'%3E%3C/path%3E%3C/svg%3E" />
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.1.0/firebase-auth-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDcdNPePuxQ28eu_EjPmdaoIw1JbLeWSWs",
+            authDomain: "shohjaxonr.firebaseapp.com",
+            databaseURL: "https://shohjaxonr-default-rtdb.firebaseio.com",
+            projectId: "shohjaxonr",
+            storageBucket: "shohjaxonr.firebasestorage.app",
+            messagingSenderId: "757161385224",
+            appId: "1:757161385224:web:625707454887ad1cc1e0bd"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        let STORE_ID = sessionStorage.getItem('current_store_id') || "";
+    </script>
+</head>
+<body>
+<script>if(localStorage.getItem('r04_admin_theme') === 'dark') document.body.classList.add('dark-mode');</script>
+
+<!-- ── LOADER ──────────────────────────────────── -->
+<div id="globalLoader" class="global-loader">
+    <div class="loader-inner">
+        <div class="loader-spinner"></div>
+        <span>Yuklanmoqda...</span>
+    </div>
+</div>
+
+<!-- ── LOGIN ──────────────────────────────────── -->
+<div id="loginOverlay" class="modal-overlay active">
+    <div class="login-panel">
+<div class="login-logo">
+    <div class="login-logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"></path>
+            <path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"></path>
+            <path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"></path>
+        </svg>
+    </div>
+    <span class="login-logo-text"><span class="dash-text">Dash</span> <span class="pos-text">POS</span></span>
+</div>
+        <h2 class="login-title">Boshqaruvga kirish</h2>
+        <p class="login-sub">Davom etish uchun tizimga kiring</p>
+        <div class="form-group">
+            <label class="form-label">Login</label>
+            <input type="text" id="loginUsername" class="form-input" placeholder="Loginni kiriting">
+        </div>
+        <div class="form-group">
+            <label class="form-label">Parol</label>
+            <input type="password" id="loginPassword" class="form-input" placeholder="Parolni kiriting" onkeypress="if(event.key === 'Enter') attemptLogin();">
+        </div>
+        <button class="login-btn" onclick="attemptLogin()">Kirish</button>
+    </div>
+</div>
+
+<!-- ── SIDEBAR OVERLAY ─────────────────────────── -->
+<div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ── SIDEBAR ────────────────────────────────── -->
+<aside class="sidebar">
+    <div class="sidebar-brand">
+    <div class="brand-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 21v-5a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v5"></path>
+            <path d="M17.774 10.31a1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.451 0 1.12 1.12 0 0 0-1.548 0 2.5 2.5 0 0 1-3.452 0 1.12 1.12 0 0 0-1.549 0 2.5 2.5 0 0 1-3.77-3.248l2.889-4.184A2 2 0 0 1 7 2h10a2 2 0 0 1 1.653.873l2.895 4.192a2.5 2.5 0 0 1-3.774 3.244"></path>
+            <path d="M4 10.95V19a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8.05"></path>
+        </svg>
+    </div>
+    <span class="brand-name"><span class="dash-text">Dash</span> <span class="pos-text">POS</span></span>
+</div>
+
+    <nav class="nav-menu">
+        <div class="nav-section-label">Asosiy</div>
+
+        <div class="nav-item active" onclick="switchTab('dashboard', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            </span>
+            <span class="nav-label">Bosh sahifa</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('products', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            </span>
+            <span class="nav-label">Mahsulotlar</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('astatka', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+            </span>
+            <span class="nav-label">Astatka (Qoldiq)</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('invhistory', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+            </span>
+            <span class="nav-label">Ombor Tarixi</span>
+        </div>
+
+        <div class="nav-section-label" style="margin-top: 8px;">Savdo</div>
+
+        <div class="nav-item" onclick="switchTab('sellers', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </span>
+            <span class="nav-label">Sotuvchilar</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('history', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </span>
+            <span class="nav-label">Savdo tarixi</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('debts', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+            </span>
+            <span class="nav-label">Qarz Daftari</span>
+        </div>
+
+        <div class="nav-section-label" style="margin-top: 8px;">Boshqaruv</div>
+
+        <div class="nav-item" onclick="switchTab('finance', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </span>
+            <span class="nav-label">Moliya</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('subscription', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            </span>
+            <span class="nav-label">Obuna</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('settings', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </span>
+            <span class="nav-label">Sozlamalar</span>
+        </div>
+
+        <div class="nav-item" onclick="switchTab('contact', this)">
+            <span class="nav-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+            </span>
+            <span class="nav-label">Aloqa</span>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">v2.0 &copy; 2026 DashPOS</div>
+</aside>
+
+<!-- ── MAIN CONTENT ────────────────────────────── -->
+<div class="main-content">
+
+    <header class="top-header">
+        <div class="header-title" id="pageTitle">
+            <button class="hamburger-btn" onclick="toggleSidebar()">
+                <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2.5" fill="none"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <span>Bosh sahifa</span>
+        </div>
+        <div class="header-controls">
+            <button class="theme-btn" id="themeToggleBtn" onclick="toggleTheme()"></button>
+            <a href="kassa.html" target="_blank" class="btn-kassa-link" title="Kassaga o'tish">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+                <span class="kassa-btn-text">Kassa</span>
+            </a>
+            <div class="admin-profile" onclick="openProfileModal()">
+                <div class="profile-text-wrap">
+                    <strong class="user-name" id="adminUserName">Admin</strong>
+                    <span class="user-role">Boshqaruvchi</span>
+                </div>
+                <div class="admin-avatar" id="headerAvatar">A</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="content-area">
+
+        <!-- ── DASHBOARD ──────────────────────────── -->
+        <div id="dashboard-section" class="section-container active">
+            <div class="page-header">
+                <div class="page-header-text">
+                    <h1 class="page-title-text">Umumiy statistika</h1>
+                </div>
+                <div class="page-header-actions">
+                    <div class="filter-pill-group">
+                        <button class="filter-btn active" onclick="setRevFilter('kunlik', this)">Kunlik</button>
+                        <button class="filter-btn" onclick="setRevFilter('oylik', this)">Oylik</button>
+                        <button class="filter-btn" onclick="setRevFilter('yillik', this)">Yillik</button>
+                    </div>
+                    <input type="date" id="revDateInput" class="filter-input" onchange="enforceMaxDate(this); updateDashboardInfo()">
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <p class="stat-label">Daromad (<span id="revFilterLabel">Kunlik</span>)</p>
+                    <h2 class="stat-value" id="revSumDisplay">0 so'm</h2>
+                    <div class="stat-trend stat-trend--up">&#8593; Bugungi tushum</div>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Sof Foyda (<span id="profitFilterLabel">Kunlik</span>)</p>
+                    <h2 class="stat-value stat-value--success" id="profitSumDisplay">0 so'm</h2>
+                    <div class="stat-trend stat-trend--up">&#8593; Sof daromad</div>
+                </div>
+                <div class="stat-card stat-card--clickable" onclick="openLowStockModal()">
+                    <p class="stat-label">
+                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2.5" fill="none" style="color:var(--danger);vertical-align:middle;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        Kam qolganlar
+                    </p>
+                    <h2 class="stat-value stat-value--danger" id="lowStockCountText">0 ta</h2>
+                    <div class="stat-trend stat-trend--neutral">Batafsil ko'rish uchun bosing</div>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">
+                        <svg viewBox="0 0 24 24" width="13" height="13" stroke="currentColor" stroke-width="2" fill="none" style="vertical-align:middle;margin-right:4px"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                        Jami Mahsulotlar
+                    </p>
+                    <h2 class="stat-value" id="statTotalItems">0 xil</h2>
+                    <div class="stat-trend stat-trend--neutral">Ombordagi barcha tovarlar</div>
+                </div>
+            </div>
+
+            <div class="chart-card">
+                <div class="chart-card-header">
+                    <h3 class="chart-card-title">Daromad grafigi</h3>
+                </div>
+                <div class="chart-card-body">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── MAHSULOTLAR ────────────────────────── -->
+        <div id="products-section" class="section-container">
+            <div class="top-bar" style="flex-wrap:wrap;">
+                <input type="text" id="searchInput" class="search-input" placeholder="Mahsulot nomi yoki kodini qidiring..." oninput="currentPageProducts = 1; renderTable()">
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn" style="background:#e74c3c;" onclick="confirmZeroStock()">🚫 0 Qilish</button>
+                    <button class="btn" style="background:#2980b9;" onclick="exportToExcel()">Excel yuklash</button>
+                    <input type="file" id="excelImportInput" accept=".xlsx,.xls" style="display:none;" onchange="importFromExcel(event)">
+                    <button class="btn" style="background:#8e44ad;" onclick="document.getElementById('excelImportInput').click()">Import</button>
+                    <button class="btn btn-add" onclick="openAddModal()">+ Qo'shish</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="productsTable">
+                    <thead>
+                        <tr><th style="width:50px">T/r</th><th>Kod</th><th>Nomi</th><th>Narxi</th><th>Birlik</th><th>Qoldiq</th><th>Chegara</th><th style="text-align:right">Amallar</th></tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination-container">
+                <button class="pagination-btn" id="prevBtnProd" onclick="prevPageProducts()">&#8592; Oldingi</button>
+                <span class="pagination-info" id="pageInfoProd">1 / 1</span>
+                <button class="pagination-btn" id="nextBtnProd" onclick="nextPageProducts()">Keyingi &#8594;</button>
+            </div>
+        </div>
+
+        <!-- ── ASTATKA ─────────────────────────────── -->
+        <div id="astatka-section" class="section-container">
+            <div class="top-bar" style="flex-wrap:wrap;">
+                <h2 class="section-title">Astatka (Qoldiq) Hisoboti</h2>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="astatkaSearch" class="search-input" placeholder="Mahsulot qidirish..." oninput="currentPageAstatka = 1; renderAstatka()">
+                    <button class="btn" style="background:#2980b9;" onclick="exportAstatkaToExcel()">Excel yuklash</button>
+                </div>
+            </div>
+            <div class="stats-grid stats-grid--4" style="margin-bottom:20px;">
+                <div class="stat-card">
+                    <p class="stat-label">📦 Jami Xil Mahsulot</p>
+                    <h2 class="stat-value" id="astTotalItems">0</h2>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">💰 Jami Tan Narx (Qiymat)</p>
+                    <h2 class="stat-value" id="astTotalCost" style="color:#8e44ad;">0 so'm</h2>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">📈 Jami Sotish (Qiymat)</p>
+                    <h2 class="stat-value" id="astTotalSale" style="color:var(--brand);">0 so'm</h2>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">🟢 Kutilayotgan Foyda</p>
+                    <h2 class="stat-value stat-value--success" id="astTotalProfit">0 so'm</h2>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>T/r</th><th>Kod</th><th>Nomi</th><th>Soni</th><th>Tan Narxi</th><th>Sotish Narxi</th><th>Umumiy Qiymati</th><th>Kutilayotgan Foyda</th></tr></thead>
+                    <tbody id="astatkaBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination-container">
+                <button class="pagination-btn" id="prevBtnAst" onclick="prevPageAstatka()">&#8592; Oldingi</button>
+                <span class="pagination-info" id="pageInfoAstatka">1 / 1</span>
+                <button class="pagination-btn" id="nextBtnAst" onclick="nextPageAstatka()">Keyingi &#8594;</button>
+            </div>
+        </div>
+
+        <!-- ── OMBOR TARIXI ────────────────────────── -->
+        <div id="invhistory-section" class="section-container">
+            <div class="top-bar" style="flex-wrap:wrap;gap:10px;">
+                <h2 class="section-title">Ombor Tarixi</h2>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <input type="date" id="invHistDate" class="form-input" style="width:auto;padding:8px;" onchange="currentPageInvHist = 1; renderInvHistory()">
+                    <select id="invHistAction" class="form-input" style="width:auto;padding:8px;" onchange="currentPageInvHist = 1; renderInvHistory()">
+                        <option value="all">Barcha harakatlar</option>
+                        <option value="Qo'shildi">Qo'shildi (Yangi)</option>
+                        <option value="O'zgartirildi">O'zgartirildi</option>
+                        <option value="O'chirildi">O'chirildi</option>
+                        <option value="Import">Excel Import</option>
+                    </select>
+                    <input type="text" id="invHistSearch" class="search-input" placeholder="Nomi yoki kodini qidiring..." oninput="currentPageInvHist = 1; renderInvHistory()" style="width:240px;padding:8px;">
+                    <button class="btn-outline" onclick="clearInvHistoryFilters()">🔄 Tozalash</button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Sana / Vaqt</th><th>Harakat</th><th>Mahsulot / Miqdor</th><th>Qoldiq O'zgarishi</th><th>Admin</th><th>Izoh</th><th style="text-align:right">Amal</th></tr></thead>
+                    <tbody id="invHistoryBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination-container">
+                <button class="pagination-btn" id="prevBtnInvHist" onclick="prevPageInvHist()">&#8592; Oldingi</button>
+                <span class="pagination-info" id="pageInfoInvHist">1 / 1</span>
+                <button class="pagination-btn" id="nextBtnInvHist" onclick="nextPageInvHist()">Keyingi &#8594;</button>
+            </div>
+        </div>
+
+        <!-- ── SOTUVCHILAR ─────────────────────────── -->
+        <div id="sellers-section" class="section-container">
+            <div class="top-bar">
+                <h2 class="section-title">Sotuvchilar</h2>
+                <button class="btn btn-add" onclick="openSellerModal()">+ Sotuvchi Qo'shish</button>
+            </div>
+            <div class="table-container">
+                <table id="sellersTable">
+                    <thead><tr><th>T/r</th><th>Ism-sharif</th><th>Login</th><th>Parol</th><th>Qilgan Savdosi</th><th>Ulush (%)</th><th style="text-align:center">Holati</th><th style="text-align:right">Amallar</th></tr></thead>
+                    <tbody id="sellersBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── SAVDO TARIXI ────────────────────────── -->
+        <div id="history-section" class="section-container">
+            <div class="top-bar" style="flex-wrap:wrap;gap:10px;">
+                <h2 class="section-title">Savdo Tarixi <span id="historyFilteredTotal" style="font-size:14px;color:var(--success);margin-left:8px;font-weight:600;"></span></h2>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:flex-end;flex:1;">
+                    <input type="date" id="histFilterDate" class="form-input" style="width:auto;padding:8px;" onchange="enforceMaxDate(this); currentPageHistory = 1; renderHistory()">
+                    <select id="historyPaymentFilter" class="form-input" style="width:auto;padding:8px;" onchange="currentPageHistory = 1; renderHistory()">
+                        <option value="all">Barcha to'lovlar</option>
+                        <option value="naqd">💵 Naqd pul</option>
+                        <option value="karta">💳 Karta</option>
+                        <option value="visa">🌍 Visa / Master</option>
+                        <option value="nasiya">📝 Nasiya</option>
+                    </select>
+                    <select id="histFilterSeller" class="form-input" style="width:auto;padding:8px;" onchange="currentPageHistory = 1; renderHistory()"><option value="all">Barcha sotuvchilar</option></select>
+                    <button class="btn-outline" onclick="clearHistoryFilter()">🔄 Filtr</button>
+                    <button class="btn" style="background:var(--danger);padding:8px 14px;border-radius:8px;display:flex;align-items:center;gap:6px;" onclick="requestHistoryClear()">
+                        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        Tozalash
+                    </button>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="historyTable">
+                    <thead><tr><th>Sana</th><th>Vaqt</th><th>Sotuvchi</th><th>Jami Summa</th><th style="text-align:right">Amallar</th></tr></thead>
+                    <tbody id="historyBody"></tbody>
+                </table>
+            </div>
+            <div class="pagination-container">
+                <button class="pagination-btn" id="prevBtnHist" onclick="prevPageHistory()">&#8592; Oldingi</button>
+                <span class="pagination-info" id="pageInfoHist">1 / 1</span>
+                <button class="pagination-btn" id="nextBtnHist" onclick="nextPageHistory()">Keyingi &#8594;</button>
+            </div>
+        </div>
+
+        <!-- ── QARZ DAFTARI ────────────────────────── -->
+        <div id="debts-section" class="section-container">
+            <div class="top-bar">
+                <h2 class="section-title">Qarz Daftari</h2>
+                <input type="text" id="debtSearch" class="search-input" placeholder="Ism bo'yicha izlash..." oninput="renderDebts()">
+            </div>
+            <div class="stats-grid" style="margin-bottom:20px;">
+                <div class="stat-card stat-card--full">
+                    <p class="stat-label">💸 Jami Qarzdorlik</p>
+                    <h2 class="stat-value stat-value--danger" id="totalDebtAmount">0 so'm</h2>
+                    <div class="stat-trend stat-trend--neutral">Do'kondan qarzga olingan tovarlar jami summasi</div>
+                </div>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>Haridor Ismi</th><th>Telefon</th><th>Jami Qarz (so'm)</th><th>To'lov Kuni / Muddat</th><th style="text-align:right">Amallar</th></tr></thead>
+                    <tbody id="debtsBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ── MOLIYA ──────────────────────────────── -->
+        <div id="finance-section" class="section-container">
+            <div id="financeBreadcrumb" class="breadcrumb" style="display:none;">
+                <div onclick="showFinanceView('main')" class="back-btn" title="Ortga">
+                    <svg viewBox="0 0 24 24" style="width:18px;height:18px;" stroke="currentColor" stroke-width="2" fill="none"><polyline points="15 18 9 12 15 6"/></svg>
+                </div>
+                <span class="link" onclick="showFinanceView('main')">Moliya</span>
+                <span class="muted">/</span>
+                <span class="current" id="financeBreadcrumbText">...</span>
+            </div>
+
+            <div id="financeMainView">
+                <div class="top-bar"><h2 class="section-title">Moliya va Hisobotlar</h2></div>
+                <div class="stats-grid stats-grid--3" style="margin-bottom:20px;">
+                    <div class="stat-card stat-card--clickable" onclick="showFinanceView('profit')">
+                        <p class="stat-label">💰 Kutilayotgan Sof Foyda</p>
+                        <h2 class="stat-value stat-value--success" id="finNetProfit">0 so'm</h2>
+                        <div class="stat-trend stat-trend--neutral">Kutilayotgan umumiy sof foyda</div>
+                    </div>
+                    <div class="stat-card stat-card--clickable" onclick="showFinanceView('realized_profit')">
+                        <p class="stat-label">📊 Haqiqiy Sof Foyda</p>
+                        <h2 class="stat-value stat-value--success" id="finRealizedProfit">0 so'm</h2>
+                        <div class="stat-trend stat-trend--neutral">Sotilgan tovarlardan sof foyda</div>
+                    </div>
+                    <div class="stat-card stat-card--clickable" onclick="showFinanceView('expenses')">
+                        <p class="stat-label">📉 Xarajatlar Daftari</p>
+                        <h2 class="stat-value stat-value--danger" id="finTotalExpenses">0 so'm</h2>
+                        <div class="stat-trend stat-trend--neutral">Barcha chiqimlar va soliqlar</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="financeProfitView" style="display:none;">
+                <div class="top-bar" style="margin-bottom:15px;">
+                    <h3 class="section-title" style="font-size:17px;">Kutilayotgan Sof Foyda</h3>
+                    <div style="display:flex;gap:8px;">
+                        <select id="profFilterField" class="form-input" style="width:auto;padding:8px;" onchange="applyFinanceFilter('profit')">
+                            <option value="total">Jami foyda bo'yicha</option>
+                            <option value="qty">Soni bo'yicha</option>
+                            <option value="margin">1 ta mahsulot foydasi</option>
+                        </select>
+                        <select id="profFilterOrder" class="form-input" style="width:auto;padding:8px;" onchange="applyFinanceFilter('profit')">
+                            <option value="desc">Kamayish ⬇</option>
+                            <option value="asc">O'sish ⬆</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Mahsulot</th><th>Soni</th><th>Tan Narxi</th><th>Sotish Narxi</th><th>1 ta Foyda</th><th>Jami Foyda</th></tr></thead>
+                        <tbody id="finProfBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="financeRealizedProfitView" style="display:none;">
+                <div class="top-bar" style="margin-bottom:15px;">
+                    <h3 class="section-title" style="font-size:17px;">Haqiqiy Sof Foyda</h3>
+                    <div style="display:flex;gap:8px;">
+                        <input type="date" id="realizedProfitDate" class="form-input" style="width:auto;padding:8px;" onchange="enforceMaxDate(this); renderFinanceRealizedProfit()">
+                        <button class="btn-outline" onclick="document.getElementById('realizedProfitDate').value=''; renderFinanceRealizedProfit();">Barchasi</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Sana / Vaqt</th><th>Sotuvchi</th><th>Jami Tushum</th><th>Tan Narx</th><th>Sof Foyda</th><th>Amal</th></tr></thead>
+                        <tbody id="finRealizedProfitBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="financeExpensesView" style="display:none;">
+                <div class="top-bar" style="margin-bottom:15px;">
+                    <h3 class="section-title" style="font-size:17px;">Xarajatlar Daftari</h3>
+                    <button class="btn btn-add" onclick="openExpCatModal()">+ Yangi Bo'lim</button>
+                </div>
+                <div style="display:flex;gap:10px;margin-bottom:14px;">
+                    <select id="expCatFilter" class="form-input" style="width:auto;" onchange="renderExpCats()">
+                        <option value="all">Barcha turlar</option>
+                        <option value="korxona">🏢 Korxona</option>
+                        <option value="soliq">🏛 Soliqlar</option>
+                        <option value="texnika">⚙️ Texnikalar</option>
+                    </select>
+                    <input type="text" id="expCatSearch" class="search-input" placeholder="Nomi bo'yicha qidirish..." oninput="renderExpCats()" style="width:240px;">
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead><tr><th>Turi</th><th>Nomi va Tafsilotlar</th><th>Jami Chiqim</th><th style="text-align:right">Amallar</th></tr></thead>
+                        <tbody id="expCatsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── OBUNA ───────────────────────────────── -->
+        <div id="subscription-section" class="section-container">
+            <div class="panel-box" style="max-width:560px;">
+                <h2 style="margin-top:0;color:var(--text-primary);">Mening Obunam</h2>
+                <div style="margin-top:20px;display:flex;flex-direction:column;gap:14px;">
+                    <div class="info-row"><span class="info-label">Holati</span><strong id="subStatus" style="color:var(--success);">Yuklanmoqda...</strong></div>
+                    <div class="info-row"><span class="info-label">Tarif</span><span id="subPlan" class="badge-plan plan-free">-</span></div>
+                    <div class="info-row"><span class="info-label">Tugash sanasi</span><strong id="subEndDate" style="color:var(--text-primary);">-</strong></div>
+                </div>
+                <p class="info-note">* Obuna va tariflar faqatgina Super Admin tomonidan o'zgartirilishi mumkin.</p>
+            </div>
+        </div>
+
+        <!-- ── SOZLAMALAR ─────────────────────────── -->
+        <div id="settings-section" class="section-container">
+            <div class="panel-box" style="max-width:520px;margin:0 auto;">
+                <h3 style="margin:0 0 20px;color:var(--text-primary);font-size:17px;padding-bottom:14px;border-bottom:1px solid var(--border);">Kirish Sozlamalari</h3>
+                <div class="form-group">
+                    <label class="form-label">Hozirgi Login</label>
+                    <input type="text" id="setCurrLogin" class="form-input" disabled style="opacity:0.6;background:var(--bg);">
+                </div>
+                <div class="form-group" style="margin-top:18px;">
+                    <label class="form-label">Yangi Parol</label>
+                    <input type="password" id="setNewPassword" class="form-input" placeholder="Yangi parolni kiriting" autocomplete="off">
+                </div>
+                <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--border);">
+                    <button class="btn btn-add" style="background:var(--brand);width:100%;padding:12px;" onclick="saveAdminSettings()">Yangilash</button>
+                    <p style="font-size:11px;color:var(--text-secondary);margin-top:10px;">Eslatma: Ba'zi o'zgarishlar S-Admin tomonidan tasdiqlanishi mumkin.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── ALOQA ───────────────────────────────── -->
+        <div id="contact-section" class="section-container">
+            <div class="panel-box" style="max-width:420px;margin:0 auto;text-align:center;padding:48px 40px;">
+                <div class="dev-avatar">💻</div>
+                <h2 style="color:var(--text-primary);margin:0 0 6px;">Dasturchi bilan aloqa</h2>
+                <p style="color:var(--text-secondary);font-size:14px;margin:0 0 28px;">Obunani uzaytirish yoki muammolar bo'yicha.</p>
+                <div style="text-align:left;display:inline-block;line-height:2.2;margin-bottom:24px;">
+                    <div><strong style="color:var(--text-primary);">Telefon:</strong> <span style="color:var(--text-secondary);">+998 93 760 60 96</span></div>
+                    <div><strong style="color:var(--text-primary);">Email:</strong> <span style="color:var(--text-secondary);">admin@r04.uz</span></div>
+                </div>
+                <div>
+                    <a href="https://t.me/r04_admin" target="_blank" style="text-decoration:none;">
+                        <button style="background:#27ae60;color:white;border:none;padding:10px 22px;border-radius:24px;font-size:13px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 4px 12px rgba(39,174,96,0.3);">
+                            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            Telegram: @r04_admin
+                        </button>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ════════════════════════════════════════════ -->
+<!-- MODALS (IDs and onclick — unchanged)         -->
+<!-- ════════════════════════════════════════════ -->
+
+<div id="debtPaymentModal" class="modal-overlay" style="z-index:10003;">
+    <div class="modal-box" style="max-width:400px;text-align:center;">
+        <h3 class="modal-title" style="border-bottom:1px solid var(--border);padding-bottom:10px;">Qarz To'lovi</h3>
+        <div style="font-size:17px;margin-bottom:4px;font-weight:700;color:var(--text-primary);" id="payDebtName">Ism</div>
+        <div style="color:var(--danger);font-size:20px;font-weight:700;margin-bottom:20px;">Qoldiq: <span id="payDebtBalance">0</span> so'm</div>
+        <div class="form-group">
+            <label class="form-label" style="text-align:left;">To'lanayotgan Summa (so'm)</label>
+            <input type="text" id="payDebtAmount" class="form-input" placeholder="0" style="font-size:17px;font-weight:700;color:var(--success);" oninput="formatExpenseInput(this)">
+        </div>
+        <div class="form-group">
+            <label class="form-label" style="text-align:left;">Sotuvchini tanlang</label>
+            <select id="payDebtSeller" class="form-input"></select>
+        </div>
+        <div class="form-group">
+            <label class="form-label" style="text-align:left;">Admin Paroli</label>
+            <input type="password" id="payDebtPassword" class="form-input" placeholder="Tasdiqlash uchun parol...">
+            <div id="payDebtError" style="color:var(--danger);font-size:12px;font-weight:700;margin-top:5px;text-align:left;"></div>
+        </div>
+        <div class="modal-buttons" style="display:flex;gap:10px;">
+            <button class="btn-cancel" style="flex:1;" onclick="closeDebtPaymentModal()">Bekor qilish</button>
+            <button class="btn-save" style="flex:1;background:var(--success);" onclick="confirmDebtPayment()">Tasdiqlash</button>
+        </div>
+    </div>
+</div>
+
+<div id="receiptModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:550px;text-align:left;">
+        <h3 id="receiptModalTitle" class="modal-title" style="border-bottom:1px solid var(--border);padding-bottom:10px;">Chek tafsilotlari</h3>
+        <div id="receiptDetailsContent" style="max-height:400px;overflow-y:auto;margin-bottom:15px;padding-right:5px;"></div>
+        <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:15px;border-top:1px solid var(--border);padding-top:15px;flex-wrap:wrap;">
+            <div id="receiptModalActions" style="display:flex;gap:10px;width:100%;justify-content:space-between;"></div>
+            <button style="padding:10px 20px;border-radius:8px;border:none;background:#34495e;color:white;cursor:pointer;font-weight:700;font-size:14px;transition:0.2s;margin-left:auto;" onclick="closeReceiptModal()" onmouseover="this.style.backgroundColor='#2c3e50'" onmouseout="this.style.backgroundColor='#34495e'">Yopish</button>
+        </div>
+    </div>
+</div>
+
+<div id="passwordModal" class="modal-overlay" style="z-index:10002;">
+    <div class="modal-box" style="max-width:350px;text-align:center;">
+        <h3 class="modal-title" style="border-bottom:1px solid var(--border);padding-bottom:10px;text-align:left;">Xavfsizlik</h3>
+        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:15px;text-align:left;">O'zgarishlarni bazaga kiritish uchun ADMIN parolini yozing:</p>
+        <input type="password" id="adminPasswordInput" class="form-input" placeholder="Parolni kiriting..." style="font-size:16px;margin-bottom:20px;" onkeypress="if(event.key==='Enter') submitPassword();">
+        <div style="display:flex;justify-content:flex-end;gap:10px;">
+            <button class="btn-cancel" onclick="closePasswordModal()">Bekor qilish</button>
+            <button class="btn-save" style="background:#f39c12;" onclick="submitPassword()">Tasdiqlash</button>
+        </div>
+    </div>
+</div>
+
+<div id="expCatModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="modal-title" id="expCatModalTitle">Yangi Bo'lim</h3>
+        <input type="hidden" id="expCatId">
+        <div class="form-group">
+            <label class="form-label">Bo'lim Turi</label>
+            <select id="expCatType" class="form-input" onchange="toggleExpCatFields()">
+                <option value="korxona">Korxona va Firmalar</option>
+                <option value="soliq">Soliqlar</option>
+                <option value="texnika">Texnikalar</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label id="expCatNameLabel" class="form-label">Korxona yoki Firma nomini kiriting</label>
+            <input type="text" id="expCatName" class="form-input" placeholder="Masalan: Optom 1...">
+        </div>
+        <div id="expCatExtraFields">
+            <div class="form-group"><label class="form-label">Telefon (Ixtiyoriy)</label><input type="text" id="expCatPhone" class="form-input" placeholder="+998..."></div>
+            <div class="form-group"><label class="form-label">Keltiruvchi shaxs (Ixtiyoriy)</label><input type="text" id="expCatPerson" class="form-input" placeholder="Ismi..."></div>
+        </div>
+        <div class="modal-buttons"><button class="btn-cancel" onclick="closeExpCatModal()">Bekor qilish</button><button class="btn-save" onclick="saveExpCat()">Saqlash</button></div>
+    </div>
+</div>
+
+<div id="expHistoryModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:600px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px;">
+            <h3 class="modal-title" id="expHistoryTitle" style="border:none;margin:0;padding:0;">Tarix</h3>
+            <button class="btn btn-add" onclick="openExpTxModal()">+ Chiqim qo'shish</button>
+        </div>
+        <div class="table-container" style="max-height:350px;overflow-y:auto;">
+            <table style="font-size:13px;"><thead><tr><th>Sana</th><th>Izoh</th><th>Summa</th><th style="text-align:right">Amal</th></tr></thead><tbody id="expHistoryBody"></tbody></table>
+        </div>
+        <div class="pagination-container" style="padding:10px 0 0;">
+            <button class="pagination-btn" id="prevBtnExpTx" onclick="prevPageExpTx()">Oldingi</button>
+            <span class="pagination-info" id="pageInfoExpTx">1 / 1</span>
+            <button class="pagination-btn" id="nextBtnExpTx" onclick="nextPageExpTx()">Keyingi</button>
+        </div>
+        <div class="modal-buttons"><button class="btn-cancel" style="width:100%;" onclick="closeExpHistoryModal()">Yopish</button></div>
+    </div>
+</div>
+
+<div id="expTxModal" class="modal-overlay" style="z-index:10002;">
+    <div class="modal-box">
+        <h3 class="modal-title">Chiqim qo'shish</h3>
+        <div class="form-group"><label class="form-label">Summa (so'm)</label><input type="text" id="expTxAmount" class="form-input" placeholder="0" oninput="formatExpenseInput(this)"></div>
+        <div class="form-group"><label class="form-label">Sana</label><input type="date" id="expTxDate" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Izoh</label><textarea id="expTxNote" class="form-input" rows="2" placeholder="Nima uchun berildi..."></textarea></div>
+        <div class="modal-buttons"><button class="btn-cancel" onclick="closeExpTxModal()">Bekor qilish</button><button class="btn-save" onclick="saveExpTx()">Saqlash</button></div>
+    </div>
+</div>
+
+<div id="productModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="modal-title" id="modalTitle" style="border:none;padding-bottom:0;">Yangi Mahsulot</h3>
+        <input type="hidden" id="editIndex">
+        <div class="form-group"><label class="form-label">Fiskal Kod</label><input type="text" id="pCode" class="form-input" autocomplete="off"></div>
+        <div class="form-group"><label class="form-label">Mahsulot Nomi</label><input type="text" id="pName" class="form-input" autocomplete="off"></div>
+        <div style="display:flex;gap:14px;">
+            <div class="form-group" style="flex:1;"><label class="form-label">Tan narxi (so'm)</label><input type="number" id="pCostPrice" class="form-input" min="0" oninput="this.value=Math.abs(this.value)" placeholder="0"></div>
+            <div class="form-group" style="flex:1;"><label class="form-label">Sotish narxi (so'm)</label><input type="number" id="pPrice" class="form-input" min="0"></div>
+        </div>
+        <div style="display:flex;gap:14px;">
+            <div class="form-group" style="flex:1;">
+                <label class="form-label">Sotuv birligi</label>
+                <select id="pUnit" class="form-input">
+                    <option value="dona">Dona</option><option value="kilo">Kilo (kg)</option><option value="metr">Metr (m)</option><option value="qadoq">Qadoq</option>
+                </select>
+            </div>
+            <div class="form-group" style="flex:1;"><label class="form-label">Ogohlantirish (ta/kg)</label><input type="number" id="pWarning" class="form-input" min="0" value="5"></div>
+        </div>
+        <div class="form-group"><label class="form-label">Ombordagi Qoldiq</label><input type="number" id="pStock" class="form-input" min="0" step="any" placeholder="Masalan: 10 yoki 1.5"></div>
+        <div class="modal-buttons"><button class="btn-cancel" onclick="closeModal()">Bekor qilish</button><button class="btn-save" onclick="saveProduct()">Saqlash</button></div>
+    </div>
+</div>
+
+<div id="sellerModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="modal-title" id="sellerModalTitle" style="border:none;padding-bottom:0;">Sotuvchi Qo'shish</h3>
+        <input type="hidden" id="editSellerIndex">
+        <div class="form-group"><label class="form-label">Ism-sharif</label><input type="text" id="sName" class="form-input" autocomplete="off"></div>
+        <div class="form-group"><label class="form-label">Login</label><input type="text" id="sLogin" class="form-input" autocomplete="off"></div>
+        <div class="form-group"><label class="form-label">Parol</label><input type="text" id="sPassword" class="form-input" autocomplete="off"></div>
+        <div class="form-group"><label class="form-label">Ulush (Foiz %)</label><input type="number" id="sPercentage" class="form-input" min="0" max="100" autocomplete="off"></div>
+        <div class="modal-buttons"><button class="btn-cancel" onclick="closeSellerModal()">Bekor qilish</button><button class="btn-save" onclick="saveSeller()">Saqlash</button></div>
+    </div>
+</div>
+
+<div id="profileModal" class="modal-overlay">
+    <div class="modal-box" style="max-width:380px;">
+        <h3 class="modal-title" style="border:none;padding-bottom:0;text-align:center;">Profil</h3>
+        <div style="display:flex;flex-direction:column;align-items:center;margin-top:16px;">
+            <div class="admin-avatar-large" id="profileAvatarPreview" onclick="document.getElementById('avatarUploadInput').click()">
+                <span id="profileAvatarText">A</span>
+                <img id="profileAvatarImg" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+                <div class="avatar-hover-effect">
+                    <svg viewBox="0 0 24 24" width="22" height="22" stroke="white" stroke-width="2" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                </div>
+            </div>
+            <input type="file" id="avatarUploadInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+            <p style="font-size:12px;color:var(--text-secondary);margin:8px 0 0;">Rasmni o'zgartirish uchun ustiga bosing</p>
+        </div>
+        <div class="form-group" style="margin-top:20px;">
+            <label class="form-label" style="text-align:left;">Admin Ismi</label>
+            <input type="text" id="editAdminNameInput" class="form-input" placeholder="Ismingizni kiriting" style="text-align:center;font-weight:700;">
+        </div>
+        <div style="text-align:center;margin-bottom:20px;font-size:14px;font-weight:600;color:var(--text-primary);">
+            Joriy Tarif: <span id="profileModalPlan" class="badge-plan plan-free">-</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;">
+            <button class="btn-save" style="width:100%;padding:12px;" onclick="saveAdminProfile()">Saqlash</button>
+            <div style="display:flex;gap:10px;">
+                <button class="btn-cancel" style="flex:1;padding:12px;" onclick="closeProfileModal()">Yopish</button>
+                <button class="btn-action" style="flex:1;background:var(--danger);color:white;border:none;padding:12px;border-radius:10px;font-weight:700;cursor:pointer;" onclick="logout()">Chiqish</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="lowStockModal" class="modal-overlay">
+    <div class="modal-box">
+        <h3 class="modal-title" style="color:var(--danger);border:none;padding-bottom:0;">⚠️ Kam qolgan mahsulotlar</h3>
+        <div id="lowStockContent" style="max-height:350px;overflow-y:auto;margin-top:15px;">
+            <ul class="low-stock-list" id="lowStockListModal"></ul>
+        </div>
+        <div class="modal-buttons" style="justify-content:space-between;">
+            <button class="btn-edit" style="border:1px solid var(--border);background:transparent;display:flex;align-items:center;gap:5px;font-weight:700;" onclick="printLowStock()">
+                <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Chop etish
+            </button>
+            <button class="btn-cancel" onclick="closeLowStockModal()">Yopish</button>
+        </div>
+    </div>
+</div>
+
+<div id="invDetailsModal" class="modal-overlay" style="z-index:10005;">
+    <div class="modal-box" style="max-width:650px;">
+        <h3 class="modal-title" style="border-bottom:1px solid var(--border);padding-bottom:10px;">Harakat Tafsilotlari</h3>
+        <div style="margin-bottom:15px;font-size:14px;color:var(--text-primary);line-height:1.6;" id="invDetailsSubtitle"></div>
+        <div class="table-container" style="max-height:350px;overflow-y:auto;">
+            <table style="font-size:13px;">
+                <thead><tr><th>Kod</th><th>Mahsulot Nomi</th><th>Eski qoldiq</th><th>Yangi qoldiq</th></tr></thead>
+                <tbody id="invDetailsBody"></tbody>
+            </table>
+        </div>
+        <div class="modal-buttons" style="margin-top:15px;">
+            <button class="btn-cancel" style="width:100%;padding:12px;" onclick="closeInvDetailsModal()">Yopish</button>
+        </div>
+    </div>
+</div>
+
+<div id="customAlertModal" class="modal-overlay" style="z-index:99999;">
+    <div class="modal-box" style="max-width:340px;text-align:center;">
+        <h3 id="alertTitle" class="modal-title" style="border:none;color:var(--danger);margin-bottom:10px;">Xabar</h3>
+        <p id="alertMessage" style="margin-bottom:20px;color:var(--text-primary);font-size:15px;line-height:1.6;"></p>
+        <div class="modal-buttons" style="justify-content:center;">
+            <button class="btn-save" style="width:100%;" onclick="closeCustomAlert()">Tushunarli</button>
+        </div>
+    </div>
+</div>
+
+<div id="customConfirmModal" class="modal-overlay" style="z-index:99999;">
+    <div class="modal-box" style="max-width:340px;text-align:center;">
+        <h3 id="confirmTitle" class="modal-title" style="border:none;color:var(--warning);margin-bottom:10px;">Diqqat</h3>
+        <p id="confirmMessage" style="margin-bottom:20px;color:var(--text-primary);font-size:15px;line-height:1.6;"></p>
+        <div class="modal-buttons" style="display:flex;gap:10px;">
+            <button class="btn-cancel" onclick="closeCustomConfirm()">Yo'q</button>
+            <button class="btn-save" style="background:var(--danger);" onclick="executeConfirm()">Ha, tasdiqlayman</button>
+        </div>
+    </div>
+</div>
+
+<div id="successModal" class="modal-overlay" style="z-index:99999;">
+    <div class="modal-box" style="max-width:340px;text-align:center;">
+        <div style="font-size:40px;margin-bottom:10px;">✅</div>
+        <h3 class="modal-title" style="border:none;color:var(--success);margin-bottom:10px;">Bajarildi</h3>
+        <p id="successModalMessage" style="margin-bottom:20px;color:var(--text-primary);font-size:15px;"></p>
+        <div class="modal-buttons" style="justify-content:center;">
+            <button class="btn-save" style="width:100%;" onclick="closeSuccessModal()">Davom etish</button>
+        </div>
+    </div>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>
